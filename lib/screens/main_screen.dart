@@ -3,8 +3,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import '../constants.dart';
+import 'location_search_screen.dart';
 
 class MainScreen extends StatefulWidget {
   final double? lat;
@@ -19,9 +23,13 @@ class MainScreen extends StatefulWidget {
 class _HomePageState extends State<MainScreen> {
   LatLng? currentLocation;
   final Completer<GoogleMapController> googleMapController =
-  Completer<GoogleMapController>();
+      Completer<GoogleMapController>();
 
   LocationSettings? locationSettings;
+
+  LatLng? destination = const LatLng(30.5392, 31.1036);
+
+  Map<PolygonId, Polygon> polygons = {};
 
   @override
   void initState() {
@@ -35,33 +43,78 @@ class _HomePageState extends State<MainScreen> {
     return Scaffold(
       body: currentLocation == null
           ? const Center(
-        child: CircularProgressIndicator(),
-      )
-          : GoogleMap(
-        initialCameraPosition: CameraPosition(
-          target: currentLocation!,
-          zoom: 13,
-        ),
-        onMapCreated: (GoogleMapController controller) {
-          googleMapController.complete(controller);
-        },
-        markers: {
-          Marker(
-            markerId: const MarkerId('currentLocation'),
-            position: currentLocation!,
-          ),
-          const Marker(
-            markerId: MarkerId('destination'),
-            position: LatLng(29.3392, 31.6036),
-          ),
-        },
-        scrollGesturesEnabled: true,
-        gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
-          Factory<OneSequenceGestureRecognizer>(
-                () => EagerGestureRecognizer(),
-          ),
-        },
-      ),
+              child: CircularProgressIndicator(),
+            )
+          : SafeArea(
+              child: Stack(
+                children: [
+                  GoogleMap(
+                    initialCameraPosition: CameraPosition(
+                      target: currentLocation!,
+                      zoom: 13,
+                    ),
+                    onMapCreated: (GoogleMapController controller) {
+                      googleMapController.complete(controller);
+                    },
+                    markers: {
+                      Marker(
+                        markerId: const MarkerId('currentLocation'),
+                        position: currentLocation!,
+                      ),
+                      Marker(
+                        markerId: const MarkerId('destination'),
+                        position: destination!,
+                      ),
+                    },
+                    scrollGesturesEnabled: true,
+                    gestureRecognizers: <Factory<OneSequenceGestureRecognizer>>{
+                      Factory<OneSequenceGestureRecognizer>(
+                        () => EagerGestureRecognizer(),
+                      ),
+                    },
+                    polygons: Set<Polygon>.of(polygons.values),
+                  ),
+                  Align(
+                    alignment: Alignment.topCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.all(10.0),
+                      child: TextFormField(
+                        readOnly: true,
+                        decoration: const InputDecoration(
+                            labelText: 'Search',
+                            labelStyle: TextStyle(color: Colors.black),
+                            fillColor: Colors.white,
+                            // Set your desired color
+                            filled: true,
+                            prefixIcon: Icon(Icons.search),
+                            border: OutlineInputBorder(
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(10)),
+                                borderSide: BorderSide.none)),
+                        onTap: () {
+                          Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder: (_, animation, ___) =>
+                                    SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, -1),
+                                    // Start from completely off-screen (top)
+                                    end: const Offset(
+                                        0, 0), // Slide down to full visibility
+                                  ).animate(animation),
+                                  child: const SearchLocationScreen(),
+                                ),
+                                transitionDuration:
+                                    const Duration(milliseconds: 500),
+                              ));
+                        },
+                      ),
+                    ),
+                  )
+                ],
+              ),
+            ),
     );
   }
 
@@ -70,7 +123,9 @@ class _HomePageState extends State<MainScreen> {
 
     if (status) {
       await initLocationSettings();
-      getPositionStream();
+      await getPositionStream();
+      // List<LatLng> points = await getPolygonPoints();
+      // generatePolygon(points);
     }
   }
 
@@ -91,15 +146,17 @@ class _HomePageState extends State<MainScreen> {
     return false;
   }
 
-  void getPositionStream() async {
+  Future<void> getPositionStream() async {
     StreamSubscription<Position> positionStream =
-    Geolocator.getPositionStream(locationSettings: locationSettings)
-        .listen((Position? position) {
+        Geolocator.getPositionStream(locationSettings: locationSettings)
+            .listen((Position? position) {
       print('state: ${position?.latitude}, ${position?.longitude}');
       setState(() {
         if (position != null) {
           currentLocation = LatLng(position.latitude, position.longitude);
 
+          print(
+              'currentLocation: ${currentLocation?.latitude}, ${currentLocation?.longitude}');
           newCameraPosition(currentLocation);
         }
       });
@@ -115,6 +172,38 @@ class _HomePageState extends State<MainScreen> {
     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
   }
 
+  Future<List<LatLng>> getPolygonPoints() async {
+    PolylinePoints polylinePoints = PolylinePoints();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+        request: PolylineRequest(
+            origin: PointLatLng(
+                currentLocation!.latitude, currentLocation!.longitude),
+            destination:
+                PointLatLng(destination!.latitude, destination!.longitude),
+            mode: TravelMode.driving),
+        googleApiKey: googleMapsApiKey);
+
+    if (result.points.isEmpty) {
+      return [];
+    }
+
+    return result.points.map((e) => LatLng(e.latitude, e.longitude)).toList();
+  }
+
+  void generatePolygon(List<LatLng> points) {
+    final polygonId = PolygonId('1');
+    final polygon = Polygon(
+      polygonId: polygonId,
+      points: points,
+      strokeWidth: 10,
+      strokeColor: Colors.blue,
+      fillColor: Colors.blue.withOpacity(0.5),
+    );
+    setState(() {
+      polygons[polygonId] = polygon;
+    });
+  }
+
   Future<void> initLocationSettings() async {
     if (defaultTargetPlatform == TargetPlatform.android) {
       locationSettings = AndroidSettings(
@@ -126,7 +215,7 @@ class _HomePageState extends State<MainScreen> {
           //when going to the background
           foregroundNotificationConfig: const ForegroundNotificationConfig(
             notificationText:
-            "Example app will continue to receive your location even when you aren't using it",
+                "Example app will continue to receive your location even when you aren't using it",
             notificationTitle: "Running in Background",
             enableWakeLock: true,
           ));
