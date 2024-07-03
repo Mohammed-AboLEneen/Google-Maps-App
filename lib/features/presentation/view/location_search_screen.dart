@@ -88,24 +88,6 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                   thickness: 4,
                   color: secondaryColor5LightTheme,
                 ),
-                Padding(
-                  padding: const EdgeInsets.all(defaultPadding),
-                  child: ElevatedButton.icon(
-                    onPressed: () {},
-                    icon: const FaIcon(FontAwesomeIcons.paperPlane,
-                        color: textColorLightTheme),
-                    label: const Text("Use my Current Location"),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: secondaryColor10LightTheme,
-                      foregroundColor: textColorLightTheme,
-                      elevation: 0,
-                      fixedSize: const Size(double.infinity, 40),
-                      shape: const RoundedRectangleBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(10)),
-                      ),
-                    ),
-                  ),
-                ),
                 const Divider(
                   height: 4,
                   thickness: 4,
@@ -115,7 +97,9 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                   child: ListView.builder(
                     itemBuilder: (context, index) {
                       return LocationListTile(
-                        press: () {},
+                        press: () {
+                          placesCubit.selectPlace(placesCubit.places[index]);
+                        },
                         location: placesCubit.places[index],
                       );
                     },
@@ -133,6 +117,10 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
                 content: Text(state.error),
               ),
             );
+          }
+
+          if (state is SelectPlaceSuccessState) {
+            Navigator.pop(context, state.location);
           }
         },
       ),

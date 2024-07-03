@@ -1,13 +1,10 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../../constants.dart';
 import 'google_map_main_screen_states.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
-import 'package:flutter/gestures.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
 
@@ -21,6 +18,7 @@ class GoogleMapMainScreenCubit extends Cubit<GoogleMapMainScreenStates> {
   LocationSettings? locationSettings;
 
   Map<PolygonId, Polygon> polygons = {};
+  Set<Marker> markers = {};
 
   late Completer<GoogleMapController> googleMapController;
 
@@ -58,14 +56,11 @@ class GoogleMapMainScreenCubit extends Cubit<GoogleMapMainScreenStates> {
     StreamSubscription<Position> positionStream =
         Geolocator.getPositionStream(locationSettings: locationSettings)
             .listen((Position? position) {
-      print('state: ${position?.latitude}, ${position?.longitude}');
       if (position != null) {
         currentLocation = LatLng(position.latitude, position.longitude);
 
-        print(
-            'currentLocation: ${currentLocation?.latitude}, ${currentLocation?.longitude}');
+        addMarker(currentLocation!, true);
         emit(GoogleMapMainScreenChangeUserPositionState());
-        newCameraPosition(currentLocation);
       }
     });
   }
@@ -77,39 +72,8 @@ class GoogleMapMainScreenCubit extends Cubit<GoogleMapMainScreenStates> {
     );
     final GoogleMapController controller = await googleMapController.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(cameraPosition));
+    emit(GoogleMapMainScreenChangeCameraPositionState());
   }
-
-  // Future<List<LatLng>> getPolygonPoints() async {
-  //   PolylinePoints polylinePoints = PolylinePoints();
-  //   PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-  //       request: PolylineRequest(
-  //           origin: PointLatLng(
-  //               currentLocation!.latitude, currentLocation!.longitude),
-  //           destination:
-  //               PointLatLng(destinationLocation!.latitude, destinationLocation!.longitude),
-  //           mode: TravelMode.driving),
-  //       googleApiKey: googleMapsApiKey);
-  //
-  //   if (result.points.isEmpty) {
-  //     return [];
-  //   }
-  //
-  //   return result.points.map((e) => LatLng(e.latitude, e.longitude)).toList();
-  // }
-
-  // void generatePolygon(List<LatLng> points) {
-  //   final polygonId = PolygonId('1');
-  //   final polygon = Polygon(
-  //     polygonId: polygonId,
-  //     points: points,
-  //     strokeWidth: 10,
-  //     strokeColor: Colors.blue,
-  //     fillColor: Colors.blue.withOpacity(0.5),
-  //   );
-  //   setState(() {
-  //     polygons[polygonId] = polygon;
-  //   });
-  // }
 
   Future<void> initLocationSettings() async {
     if (defaultTargetPlatform == TargetPlatform.android) {
@@ -143,4 +107,58 @@ class GoogleMapMainScreenCubit extends Cubit<GoogleMapMainScreenStates> {
       );
     }
   }
+
+  void addMarker(LatLng latLng, bool isCurrentLocation) {
+    if (isCurrentLocation == false && markers.length > 1) {
+      List<Marker> list = markers.toList();
+      list.removeAt(1);
+      markers = list.toSet();
+    }
+    markers.add(
+      Marker(
+        markerId: MarkerId("${markers.length}"),
+        position: latLng,
+        icon: BitmapDescriptor.defaultMarkerWithHue(isCurrentLocation
+            ? BitmapDescriptor.hueAzure
+            : BitmapDescriptor.hueRed),
+      ),
+    );
+
+    print(markers.length);
+    emit(GoogleMapMainScreenChangeCameraPositionState());
+
+    newCameraPosition(latLng);
+  }
+
+// Future<List<LatLng>> getPolygonPoints() async {
+//   PolylinePoints polylinePoints = PolylinePoints();
+//   PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+//       request: PolylineRequest(
+//           origin: PointLatLng(
+//               currentLocation!.latitude, currentLocation!.longitude),
+//           destination:
+//               PointLatLng(destinationLocation!.latitude, destinationLocation!.longitude),
+//           mode: TravelMode.driving),
+//       googleApiKey: googleMapsApiKey);
+//
+//   if (result.points.isEmpty) {
+//     return [];
+//   }
+//
+//   return result.points.map((e) => LatLng(e.latitude, e.longitude)).toList();
+// }
+
+// void generatePolygon(List<LatLng> points) {
+//   final polygonId = PolygonId('1');
+//   final polygon = Polygon(
+//     polygonId: polygonId,
+//     points: points,
+//     strokeWidth: 10,
+//     strokeColor: Colors.blue,
+//     fillColor: Colors.blue.withOpacity(0.5),
+//   );
+//   setState(() {
+//     polygons[polygonId] = polygon;
+//   });
+// }
 }

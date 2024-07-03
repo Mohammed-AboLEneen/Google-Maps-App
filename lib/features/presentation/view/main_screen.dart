@@ -25,6 +25,8 @@ class _HomePageState extends State<MainScreen> {
   final Completer<GoogleMapController> googleMapController =
       Completer<GoogleMapController>();
 
+  LatLng? destinationLocation;
+
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
@@ -36,7 +38,6 @@ class _HomePageState extends State<MainScreen> {
             GoogleMapMainScreenCubit googleMapMainScreenCubit =
                 GoogleMapMainScreenCubit.get(context);
 
-            print(googleMapMainScreenCubit.currentLocation);
             if (googleMapMainScreenCubit.currentLocation == null) {
               return const Scaffold(
                 body: Center(
@@ -56,16 +57,7 @@ class _HomePageState extends State<MainScreen> {
                       onMapCreated: (GoogleMapController controller) {
                         googleMapController.complete(controller);
                       },
-                      markers: {
-                        Marker(
-                          markerId: const MarkerId('currentLocation'),
-                          position: googleMapMainScreenCubit.currentLocation!,
-                        ),
-                        const Marker(
-                          markerId: MarkerId('destination'),
-                          position: LatLng(30.5392, 31.1036),
-                        ),
-                      },
+                      markers: googleMapMainScreenCubit.markers,
                       scrollGesturesEnabled: true,
                       gestureRecognizers: <Factory<
                           OneSequenceGestureRecognizer>>{
@@ -82,18 +74,17 @@ class _HomePageState extends State<MainScreen> {
                         child: TextFormField(
                           readOnly: true,
                           decoration: const InputDecoration(
-                              labelText: 'Search',
-                              labelStyle: TextStyle(color: Colors.black),
+                              hintText: 'Search',
+                              hintStyle: TextStyle(color: Colors.black),
                               fillColor: Colors.white,
-                              // Set your desired color
                               filled: true,
                               prefixIcon: Icon(Icons.search),
                               border: OutlineInputBorder(
                                   borderRadius:
                                       BorderRadius.all(Radius.circular(10)),
                                   borderSide: BorderSide.none)),
-                          onTap: () {
-                            Navigator.push(
+                          onTap: () async {
+                            var result = await Navigator.push(
                                 context,
                                 PageRouteBuilder(
                                   pageBuilder: (_, animation, ___) =>
@@ -109,6 +100,14 @@ class _HomePageState extends State<MainScreen> {
                                   transitionDuration:
                                       const Duration(milliseconds: 400),
                                 ));
+
+                            if (result != null) {
+                              destinationLocation =
+                                  LatLng(result.latitude, result.longitude);
+
+                              googleMapMainScreenCubit.addMarker(
+                                  destinationLocation!, false);
+                            }
                           },
                         ),
                       ),
