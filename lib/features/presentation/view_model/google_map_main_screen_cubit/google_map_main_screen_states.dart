@@ -7,3 +7,9 @@ class GoogleMapMainScreenChangeUserPositionState
 
 class GoogleMapMainScreenChangeCameraPositionState
     extends GoogleMapMainScreenStates {}
+
+class GoogleMapMainScreenErrorState extends GoogleMapMainScreenStates {
+  final String error;
+
+  GoogleMapMainScreenErrorState({required this.error});
+}

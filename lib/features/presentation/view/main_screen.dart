@@ -38,6 +38,38 @@ class _HomePageState extends State<MainScreen> {
             GoogleMapMainScreenCubit googleMapMainScreenCubit =
                 GoogleMapMainScreenCubit.get(context);
 
+            if (state is GoogleMapMainScreenErrorState) {
+              return Scaffold(
+                body: Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'There was an error: ${state.error}',
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      ElevatedButton(
+                        onPressed: () {
+                          googleMapMainScreenCubit
+                              .getUserCurrentLocation(googleMapController);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blue,
+                        ),
+                        child: const Text(
+                          'Retry',
+                          style: TextStyle(color: Colors.white),
+                        ),
+                      )
+                    ],
+                  ),
+                ),
+              );
+            }
+
             if (googleMapMainScreenCubit.currentLocation == null) {
               return const Scaffold(
                 body: Center(

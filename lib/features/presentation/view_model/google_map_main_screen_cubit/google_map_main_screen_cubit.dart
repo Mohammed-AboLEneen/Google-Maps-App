@@ -27,11 +27,15 @@ class GoogleMapMainScreenCubit extends Cubit<GoogleMapMainScreenStates> {
     googleMapController = controller;
     bool status = await checkPermissions();
 
-    if (status) {
-      await initLocationSettings();
-      await getPositionStream();
-      // List<LatLng> points = await getPolygonPoints();
-      // generatePolygon(points);
+    try {
+      if (status) {
+        await initLocationSettings();
+        await getPositionStream();
+        // List<LatLng> points = await getPolygonPoints();
+        // generatePolygon(points);
+      }
+    } catch (e) {
+      emit(GoogleMapMainScreenErrorState(error: e.toString()));
     }
   }
 
