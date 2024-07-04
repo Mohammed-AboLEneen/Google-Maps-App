@@ -69,46 +69,54 @@ class _HomePageState extends State<MainScreen> {
                     ),
                     Align(
                       alignment: Alignment.topCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.all(10.0),
-                        child: TextFormField(
-                          readOnly: true,
-                          decoration: const InputDecoration(
-                              hintText: 'Search',
-                              hintStyle: TextStyle(color: Colors.black),
-                              fillColor: Colors.white,
-                              filled: true,
-                              prefixIcon: Icon(Icons.search),
-                              border: OutlineInputBorder(
-                                  borderRadius:
-                                      BorderRadius.all(Radius.circular(10)),
-                                  borderSide: BorderSide.none)),
-                          onTap: () async {
-                            var result = await Navigator.push(
-                                context,
-                                PageRouteBuilder(
-                                  pageBuilder: (_, animation, ___) =>
-                                      SlideTransition(
-                                    position: Tween<Offset>(
-                                      begin: const Offset(0, -1),
-                                      // Start from completely off-screen (top)
-                                      end: const Offset(0,
-                                          0), // Slide down to full visibility
-                                    ).animate(animation),
-                                    child: const SearchLocationScreen(),
-                                  ),
-                                  transitionDuration:
-                                      const Duration(milliseconds: 400),
-                                ));
+                      child: GestureDetector(
+                        onTap: () async {
+                          var result = await Navigator.push(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder: (_, animation, ___) =>
+                                    SlideTransition(
+                                  position: Tween<Offset>(
+                                    begin: const Offset(0, -1),
+                                    // Start from completely off-screen (top)
+                                    end: const Offset(
+                                        0, 0), // Slide down to full visibility
+                                  ).animate(animation),
+                                  child: const SearchLocationScreen(),
+                                ),
+                                transitionDuration:
+                                    const Duration(milliseconds: 400),
+                              ));
 
-                            if (result != null) {
-                              destinationLocation =
-                                  LatLng(result.latitude, result.longitude);
+                          if (result != null) {
+                            destinationLocation =
+                                LatLng(result.latitude, result.longitude);
 
-                              googleMapMainScreenCubit.addMarker(
-                                  destinationLocation!, false);
-                            }
-                          },
+                            googleMapMainScreenCubit.addMarker(
+                                destinationLocation!, false);
+                          }
+                        },
+                        child: Container(
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          padding: const EdgeInsets.all(15),
+                          margin: const EdgeInsets.all(10.0),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.search),
+                              const SizedBox(
+                                width: 10,
+                              ),
+                              Text(
+                                'Search',
+                                style: TextStyle(
+                                    color: Colors.black.withOpacity(.8),
+                                    fontSize: 15),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     )
