@@ -84,7 +84,7 @@ class _HomePageState extends State<MainScreen> {
                     GoogleMap(
                       initialCameraPosition: CameraPosition(
                         target: googleMapMainScreenCubit.currentLocation!,
-                        zoom: 13,
+                        zoom: 15,
                       ),
                       onMapCreated: (GoogleMapController controller) {
                         googleMapController.complete(controller);
@@ -97,7 +97,8 @@ class _HomePageState extends State<MainScreen> {
                           () => EagerGestureRecognizer(),
                         ),
                       },
-                      //  polygons: Set<Polygon>.of(polygons.values),
+                      polylines: Set<Polyline>.of(
+                          googleMapMainScreenCubit.polylines.values),
                     ),
                     Align(
                       alignment: Alignment.topCenter,
@@ -109,7 +110,7 @@ class _HomePageState extends State<MainScreen> {
                                 pageBuilder: (_, animation, ___) =>
                                     SlideTransition(
                                   position: Tween<Offset>(
-                                    begin: const Offset(0, -1),
+                                    begin: const Offset(1, 0),
                                     // Start from completely off-screen (top)
                                     end: const Offset(
                                         0, 0), // Slide down to full visibility

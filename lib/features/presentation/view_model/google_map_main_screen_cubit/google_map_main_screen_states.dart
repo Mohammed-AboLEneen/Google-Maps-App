@@ -13,3 +13,5 @@ class GoogleMapMainScreenErrorState extends GoogleMapMainScreenStates {
 
   GoogleMapMainScreenErrorState({required this.error});
 }
+
+class AddNewPolygonState extends GoogleMapMainScreenStates {}

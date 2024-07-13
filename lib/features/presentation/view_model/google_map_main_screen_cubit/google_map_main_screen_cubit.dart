@@ -1,12 +1,17 @@
-import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:developer';
 
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+
+import '../../../../constants.dart';
 import 'google_map_main_screen_states.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
 
 import 'package:geolocator/geolocator.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class GoogleMapMainScreenCubit extends Cubit<GoogleMapMainScreenStates> {
   GoogleMapMainScreenCubit() : super(GoogleMapMainScreenInitialState());
@@ -17,8 +22,9 @@ class GoogleMapMainScreenCubit extends Cubit<GoogleMapMainScreenStates> {
   LatLng? destinationLocation;
   LocationSettings? locationSettings;
 
-  Map<PolygonId, Polygon> polygons = {};
+  Map<PolylineId, Polyline> polylines = {};
   Set<Marker> markers = {};
+  int count = 0;
 
   late Completer<GoogleMapController> googleMapController;
 
@@ -120,49 +126,62 @@ class GoogleMapMainScreenCubit extends Cubit<GoogleMapMainScreenStates> {
     }
     markers.add(
       Marker(
-        markerId: MarkerId("${markers.length}"),
+        markerId: MarkerId("${markers.length + 1}"),
         position: latLng,
         icon: BitmapDescriptor.defaultMarkerWithHue(isCurrentLocation
             ? BitmapDescriptor.hueAzure
             : BitmapDescriptor.hueRed),
+        onTap: () {
+          if (markers.length > 1) {}
+        },
       ),
     );
 
-    print(markers.length);
+    polylines.clear();
+
     emit(GoogleMapMainScreenChangeCameraPositionState());
 
     newCameraPosition(latLng);
   }
 
-// Future<List<LatLng>> getPolygonPoints() async {
-//   PolylinePoints polylinePoints = PolylinePoints();
-//   PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
-//       request: PolylineRequest(
-//           origin: PointLatLng(
-//               currentLocation!.latitude, currentLocation!.longitude),
-//           destination:
-//               PointLatLng(destinationLocation!.latitude, destinationLocation!.longitude),
-//           mode: TravelMode.driving),
-//       googleApiKey: googleMapsApiKey);
-//
-//   if (result.points.isEmpty) {
-//     return [];
-//   }
-//
-//   return result.points.map((e) => LatLng(e.latitude, e.longitude)).toList();
-// }
+  Future<void> generatePolygon() async {
+    polylines.clear();
 
-// void generatePolygon(List<LatLng> points) {
-//   final polygonId = PolygonId('1');
-//   final polygon = Polygon(
-//     polygonId: polygonId,
-//     points: points,
-//     strokeWidth: 10,
-//     strokeColor: Colors.blue,
-//     fillColor: Colors.blue.withOpacity(0.5),
-//   );
-//   setState(() {
-//     polygons[polygonId] = polygon;
-//   });
-// }
+    List<LatLng> points = await getPolygonPoints();
+    if (points.isEmpty) {
+      return;
+    }
+
+    final polygonId = PolylineId('$count');
+    final polygon = Polyline(
+        points: points,
+        polylineId: polygonId,
+        color: Colors.lightBlueAccent,
+        width: 6);
+    polylines[polygonId] = polygon;
+    count++;
+
+    emit(AddNewPolygonState());
+  }
+
+  Future<List<LatLng>> getPolygonPoints() async {
+    PolylinePoints polylinePoints = PolylinePoints();
+    PolylineResult result = await polylinePoints.getRouteBetweenCoordinates(
+      request: PolylineRequest(
+          origin: PointLatLng(markers.first.position.latitude,
+              markers.first.position.longitude),
+          destination: PointLatLng(
+              markers.last.position.latitude, markers.last.position.longitude),
+          mode: TravelMode.driving,
+          optimizeWaypoints: true),
+      googleApiKey: googleMapsApiKey,
+    );
+
+    if (result.status == 'OK' && result.points.isNotEmpty) {
+      return result.points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+    } else {
+      log('Error: ${result.errorMessage}');
+      return [];
+    }
+  }
 }

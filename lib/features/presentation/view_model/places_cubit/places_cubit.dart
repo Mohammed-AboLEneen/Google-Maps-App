@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:geocoding/geocoding.dart';
@@ -30,7 +32,7 @@ class PlacesCubit extends Cubit<PlacesStates> {
       if (e is DioException) {
         emit(GetPlacesErrorState(ServerFailure.dioError(e).message));
       } else {
-        print(e);
+        log(e.toString());
         emit(GetPlacesErrorState(e.toString()));
       }
     }
@@ -42,7 +44,7 @@ class PlacesCubit extends Cubit<PlacesStates> {
       List<Location> locations = await locationFromAddress(place);
       emit(SelectPlaceSuccessState(locations.first));
     } catch (e) {
-      print(e);
+      log(e.toString());
       emit(SelectPlaceErrorState(e.toString()));
     }
   }
