@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
 
-import '../../constants.dart';
+import '../../constants/constants.dart';
 
 class DioHelper {
   static final Dio dio = Dio(BaseOptions(

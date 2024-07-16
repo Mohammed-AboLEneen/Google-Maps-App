@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_app/features/presentation/view/main_screen.dart';
+
+import 'features/home/presentation/views/home_view.dart';
 
 void main() {
   runApp(const MyApp());
@@ -17,6 +18,6 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
         ),
         debugShowCheckedModeBanner: false,
-        home: const MainScreen());
+        home: const HomeView());
   }
 }

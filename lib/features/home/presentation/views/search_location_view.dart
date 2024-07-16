@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:google_maps_app/features/presentation/view_model/places_cubit/places_cubit.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
+import '../../../../constants/constants.dart';
+import 'widgets/location_list_tile.dart';
+import '../view_model/google_maps_places_cubit/google_maps_places_cubit.dart';
+import '../view_model/google_maps_places_cubit/google_maps_places_states.dart';
 
-import '../../../constants.dart';
-import '../../../cores/widgets/location_list_tile.dart';
-import '../view_model/places_cubit/places_states.dart';
+class SearchLocationView extends StatefulWidget {
+  final LatLng? currentLocation;
 
-class SearchLocationScreen extends StatefulWidget {
-  const SearchLocationScreen({super.key});
+  const SearchLocationView({super.key, this.currentLocation});
 
   @override
-  State<SearchLocationScreen> createState() => _SearchLocationScreenState();
+  State<SearchLocationView> createState() => _SearchLocationViewState();
 }
 
-class _SearchLocationScreenState extends State<SearchLocationScreen> {
+class _SearchLocationViewState extends State<SearchLocationView> {
   final TextEditingController searchController = TextEditingController();
 
   bool canSearch = true;
@@ -22,10 +24,12 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => PlacesCubit(),
-      child: BlocConsumer<PlacesCubit, PlacesStates>(
+      create: (context) =>
+          GoogleMapsPlacesCubit()..initCurrentLocation(widget.currentLocation!),
+      child: BlocConsumer<GoogleMapsPlacesCubit, GoogleMapsPlacesStates>(
         builder: (context, state) {
-          PlacesCubit placesCubit = PlacesCubit.get(context);
+          GoogleMapsPlacesCubit placesCubit =
+              GoogleMapsPlacesCubit.get(context);
 
           return Scaffold(
             appBar: AppBar(
@@ -119,8 +123,16 @@ class _SearchLocationScreenState extends State<SearchLocationScreen> {
             );
           }
 
+          if (state is SelectPlaceErrorState) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(state.error),
+              ),
+            );
+          }
+
           if (state is SelectPlaceSuccessState) {
-            Navigator.pop(context, state.location);
+            Navigator.pop(context, state.selectedPlaceModel);
           }
         },
       ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-const String googleMapsApiKey = "AIzaSyA7aWChe1t_EMuS9hbSxZVLo0xY2_j-9dk";
+const String googleMapsApiKey = "AIzaSyDlVEIr1aTi3UWiE4gMZbGjTpwDu67AhrY";
 
 const String apiKey = "Your key";
 

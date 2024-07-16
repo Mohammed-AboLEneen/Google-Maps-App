@@ -16,5 +16,5 @@
         <item name="android:windowBackground">?android:colorBackground</item>
     </style>
 
-    <string name="google_maps_api_key">AIzaSyA7aWChe1t_EMuS9hbSxZVLo0xY2_j-9dk</string>
+    <string name="google_maps_api_key">AIzaSyDlVEIr1aTi3UWiE4gMZbGjTpwDu67AhrY</string>
 </resources>
